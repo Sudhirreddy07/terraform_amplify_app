@@ -1,7 +1,7 @@
  variable "token" {
   type        = string
   description = "github token to connect github repo"
-  default     = "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"
+  default     = "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"
 }
 
 variable "repository" {
