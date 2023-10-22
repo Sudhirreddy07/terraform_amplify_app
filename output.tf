@@ -4,5 +4,5 @@ output "amplify_app_id" {
 
 
 output "amplify_app_url" {
-  value = "https://main.${aws_amplify_app.amplify_app.id}.amplifyapp.com/#home"
+  value = "https://main.${aws_amplify_app.amplify_app.id}.amplifyapp.com/"
 }
