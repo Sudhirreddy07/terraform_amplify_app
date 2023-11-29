@@ -1,8 +1,16 @@
-name: "Terraform Scheduler"
+name: "Terraform action"
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    permissions:
+      id-token: write # This is required for AWS OIDC connection
+      contents: read # This is required for actions/checkout
+      pull-requests: write # This is required for GH bot to comment on PR
   schedule:
-    - cron: '*/10 * * * *' # Schedule at 7 AM CET every day (UTC+1)
+    - cron: '0 6 * * *' # Schedule at 7 AM CET every day (UTC+1)
     - cron: '0 7 * * *' # Schedule at 8 AM CET every day (UTC+1)
 
 permissions:
@@ -56,9 +64,11 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color
+        if: github.event_name == 'pull_request'
         continue-on-error: true
 
       - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
         env:
           PLAN: "terraform\n${{ steps.plan.outputs.stdout }}"
         with:
@@ -98,8 +108,12 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-     
+      - name: Terraform Apply
+        if: |
+          (github.event_name == 'schedule' && (github.event.schedule == '0 6 * * *' || github.event.schedule == '0 7 * * *')) # Scheduled at 7 AM CET and 8 AM CET
+        run: terraform apply -auto-approve -input=false
 
       - name: Terraform Destroy
-        if: github.event_name == 'schedule' && contains(github.event.schedule, '0 7 * * *') # Scheduled at 8 AM CET
+        if: |
+          (github.event_name == 'schedule' && (github.event.schedule == '0 6 * * *' || github.event.schedule == '0 7 * * *')) # Scheduled at 7 AM CET and 8 AM CET
         run: terraform destroy -auto-approve -input=false
